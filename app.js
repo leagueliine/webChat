@@ -1,37 +1,37 @@
-var app = require('http').createServer(resposta)
-var fs = require('fs')
-var io = require('socket.io')(app)
-var usuarios = []
-var ultimas_mensagens = []
+var app = require('http').createServer(resposta);
+var fs = require('fs');
+var io = require('socket.io')(app);
+var usuarios = [];
+var ultimas_mensagens = [];
 
 io.on('connection', function (socket) {
   socket.on('entrar', function (apelido, callback) {
     if (!(apelido in usuarios)) {
       socket.apelido = apelido
-      usuarios[apelido] = socket
+      usuarios[apelido] = socket;
 
       for (indice in ultimas_mensagens) {
         socket.emit('atualizar mensagens', ultimas_mensagens[indice])
-      }
+      };
 
       var mensagem =
         '[ ' + pegarDataAtual() + ' ] ' + apelido + ' acabou de entrar na sala'
-      var obj_mensagem = { msg: mensagem, tipo: 'sistema' }
+      var obj_mensagem = { msg: mensagem, tipo: 'sistema' };
 
-      io.sockets.emit('atualizar usuarios', Object.keys(usuarios))
-      io.sockets.emit('atualizar mensagens', obj_mensagem)
+      io.sockets.emit('atualizar usuarios', Object.keys(usuarios));
+      io.sockets.emit('atualizar mensagens', obj_mensagem);
 
       armazenaMensagem(obj_mensagem)
       callback(true)
     } else {
       callback(false)
-    }
-  })
+    };
+  });
 
   socket.on('enviar mensagem', function (dados, callback) {
-    var mensagem_enviada = dados.msg
-    var usuario = dados.usu
-    if (usuario == null) usuario = ''
+    var mensagem_enviada = dados.msg;
+    var usuario = dados.usu;
+    if (usuario == null) usuario = '';
 
     mensagem_enviada =
       '[ ' +
@@ -40,7 +40,7 @@ io.on('connection', function (socket) {
       socket.apelido +
       ' diz: ' +
       mensagem_enviada
-    var obj_mensagem = { msg: mensagem_enviada, tipo: '' }
+    var obj_mensagem = { msg: mensagem_enviada, tipo: '' };
 
     if (usuario == '') {
       io.sockets.emit('atualizar mensagens', obj_mensagem)
@@ -49,9 +49,9 @@ io.on('connection', function (socket) {
       obj_mensagem.tipo = 'privada'
       socket.emit('atualizar mensagens', obj_mensagem)
       usuarios[usuario].emit('atualizar mensagens', obj_mensagem)
-    }
-    callback()
-  })
+    };
+    callback();
+  });
 
   socket.on('enviar mensagem', function (mensagem_enviada, callback) {
     mensagem_enviada =
@@ -63,26 +63,26 @@ io.on('connection', function (socket) {
       mensagem_enviada
 
     io.sockets.emit('atualizar mensagens', mensagem_enviada)
-    callback()
-  })
+    callback();
+  });
 
   socket.on('disconnect', function () {
-    delete usuarios[socket.apelido]
+    delete usuarios[socket.apelido];
 
     var mensagem =
       '[ ' + pegarDataAtual() + ' ] ' + socket.apelido + ' saiu da sala'
 
-    var obj_mensagem = { msg: mensagem, tipo: 'sistema' }
+    var obj_mensagem = { msg: mensagem, tipo: 'sistema' };
 
-    io.sockets.emit('atualizar usuarios', Object.keys(usuarios))
-    io.sockets.emit('atualizar mensagens', obj_mensagem)
+    io.sockets.emit('atualizar usuarios', Object.keys(usuarios));
+    io.sockets.emit('atualizar mensagens', obj_mensagem);
 
     armazenaMensagem(obj_mensagem)
-  })
-})
+  });
+});
 
 app.listen(3000)
-console.log('Aplicação em execução...')
+console.log('Aplicação em execução...');
 
 function resposta(req, res) {
   var arquivo = ''
@@ -91,17 +91,18 @@ function resposta(req, res) {
     arquivo = __dirname + '/index.html'
   } else {
     arquivo = __dirname + req.url
-  }
+  };
+
   fs.readFile(arquivo, function (err, data) {
     if (err) {
       res.writeHead(404)
       return res.end('Página ou arquivo não encontrado')
-    }
+    };
 
     res.writeHead(200)
     res.end(data)
-  })
-}
+  });
+};
 
 io.on('connection', function (socket) {
   socket.on('enviar mensagem', function (mensagem_enviada, callback) {
@@ -109,29 +110,29 @@ io.on('connection', function (socket) {
 
     io.sockets.emit('atualizar mensagens', mensagem_enviada)
     callback()
-  })
-})
+  });
+});
 
 function pegarDataAtual() {
-  var dataAtual = new Date()
-  var dia = (dataAtual.getDate() < 10 ? '0' : '') + dataAtual.getDate()
+  var dataAtual = new Date();
+  var dia = (dataAtual.getDate() < 10 ? '0' : '') + dataAtual.getDate();
   var mes =
-    (dataAtual.getMonth() + 1 < 10 ? '0' : '') + (dataAtual.getMonth() + 1)
-  var ano = dataAtual.getFullYear()
-  var hora = (dataAtual.getHours() < 10 ? '0' : '') + dataAtual.getHours()
-  var minuto = (dataAtual.getMinutes() < 10 ? '0' : '') + dataAtual.getMinutes()
+    (dataAtual.getMonth() + 1 < 10 ? '0' : '') + (dataAtual.getMonth() + 1);
+  var ano = dataAtual.getFullYear();
+  var hora = (dataAtual.getHours() < 10 ? '0' : '') + dataAtual.getHours();
+  var minuto = (dataAtual.getMinutes() < 10 ? '0' : '') + dataAtual.getMinutes();
   var segundo =
-    (dataAtual.getSeconds() < 10 ? '0' : '') + dataAtual.getSeconds()
+    (dataAtual.getSeconds() < 10 ? '0' : '') + dataAtual.getSeconds();
 
   var dataFormatada =
     dia + '/' + mes + '/' + ano + ' ' + hora + ':' + minuto + ':' + segundo
   return dataFormatada
-}
+};
 
 function armazenaMensagem(mensagem) {
   if (ultimas_mensagens.length > 5) {
     ultimas_mensagens.shift()
-  }
+  };
 
   ultimas_mensagens.push(mensagem)
-}
+};
